@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Event Propagation Test</title>
+</head>
+<body>
+<div id="parent" style="padding:100px;border:1px solid #333333;">
+    <div id="child" style="padding:100px;border:1px solid #333333;">
+        <div id="grandson" style="padding:100px;border:1px solid #333333;"></div>
+    </div>
+</div>
+
+<script>
+    var $=function(id){
+        return document.getElementById(id);
+    };
+    function alertP(e){
+        alert("parent");
+        e.preventDefault();
+
+    }
+    function alertC(){
+        alert("Child");
+
+    }
+    function alertG(e){
+        alert("Grandson");
+        e.stopPropagation();
+    }
+//    $("parent").onclick=alertP;
+//    $("child").onclick=alertC;
+//    $("grandson").onclick=alertG;
+    $("parent").addEventListener("click",alertP,true);
+    $("child").addEventListener("click",alertC,false);
+    $("grandson").addEventListener("click",alertG,true);
+</script>
+</body>
+</html>

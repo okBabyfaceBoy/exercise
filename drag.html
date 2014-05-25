@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Drag</title>
+    <style>
+        *{padding:0;margin:0;}
+    </style>
+    <script type="text/javascript">
+
+        function DragObject(el){
+            this.el=el||document.createElement("div");
+            this.setLayout(200,70,"dragObj");
+        }
+        DragObject.prototype.setLayout=function(width,height,className){
+            this.el.className=className;
+            this.el.style.cssText="width:"+width+"px;height:"+height+"px;border:1px solid #333333;";
+            return this;
+        }
+        DragObject.prototype.render=function(){
+            var BODY=document.body;
+            !this.el.parentNode&&BODY.appendChild(this.el);
+            var This=this,orgX=0,orgY=0,p=this.el.parentNode,orgLeft=This.el.offsetLeft,orgTop=This.el.offsetTop;
+            document.addEventListener("mouseover",function(){
+
+                This.el.style.cursor="crosshair";
+                This.el.style.border="1px dotted #333333";
+
+                console.log("over");
+
+            },false);
+            document.addEventListener("mousedown",function(e){
+
+                startLeft=This.el.offsetLeft,startTop=This.el.offsetTop;
+                orgX= e.clientX-startLeft,orgY= e.clientY-startTop,offsetX=0,offsetY=0;
+
+                var mousemoveProcess=function(e){
+                    e= e||window.event;
+                    var mouseX= e.clientX,mouseY= e.clientY,offsetX=mouseX-orgX,offsetY=mouseY-orgY;
+                    offsetX=Math.min(offsetX,This.el.parentNode.offsetWidth-This.el.offsetWidth-orgLeft);
+                    offsetY=Math.min(offsetY,This.el.parentNode.offsetHeight-This.el.offsetHeight-orgTop);
+                    (offsetX<-orgLeft)&&(offsetX=-orgLeft);
+                    (offsetY<-orgTop)&&(offsetY=-orgTop);
+                    This.el.style.left=offsetX+"px";
+                    This.el.style.top=offsetY+"px";
+                    This.el.style.position="absolute";
+                    e.preventDefault();
+                }
+                document.addEventListener("mousemove",mousemoveProcess,false);
+                document.addEventListener("mouseup",function(e){
+                    document.removeEventListener("mousemove",mousemoveProcess,false);
+                },false);
+            },false);
+
+            document.addEventListener("mouseout",function(){
+//                This.el.style.cursor="default";
+//                This.el.style.border="1px solid #333333";
+            },false);
+            this.onRender();
+            return this;
+        }
+        DragObject.prototype.onRender=function(){
+          this.el.parentNode!==document.body&&(this.el.parentNode.style.cssText="position:relative;height:600px;border:1px solid blue;");
+        }
+    </script>
+</head>
+<body>
+<div>
+
+    <div id="test"></div>
+</div>
+<script type="text/javascript">
+    new DragObject(document.getElementById("test")).render().setLayout(400,140,"newClass");
+</script>
+</body>
+</html>
