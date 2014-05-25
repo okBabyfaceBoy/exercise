@@ -11,62 +11,88 @@
             this.el=el||document.createElement("div");
             this.setLayout(200,70,"dragObj");
         }
+        DragObject.prototype.addEvent=function(el,type,fn,param){
+            var f=function(e){
+                e=e||window.event;
+                if(param){
+                    fn.call(this,e,param);
+                }
+                if(e.preventDefault){e.preventDefault();}else{
+                    e.returnValue=false;
+                }
+
+            }
+            if(window.attachEvent){
+                el.attachEvent("on"+type,f);
+            }else{
+                el.addEventListener(type,f,false);
+            }
+            return f;
+        }
+        DragObject.prototype.removeEvent=function(el,type,fn){
+            if(window.detachEvent){
+                el.detachEvent("on"+type,fn);
+            }else{
+                el.removeEventListener(type,fn);
+            }
+        }
         DragObject.prototype.setLayout=function(width,height,className){
             this.el.className=className;
-            this.el.style.cssText="width:"+width+"px;height:"+height+"px;border:1px solid #333333;";
+            this.el.style.cssText="width:"+width+"px;height:"+height+"px;border:1px solid #333333;margin-top:10px;";
             return this;
         }
         DragObject.prototype.render=function(){
             var BODY=document.body;
             !this.el.parentNode&&BODY.appendChild(this.el);
-            var This=this,orgX=0,orgY=0,p=this.el.parentNode,orgLeft=This.el.offsetLeft,orgTop=This.el.offsetTop;
-            document.addEventListener("mouseover",function(){
-
-                This.el.style.cursor="crosshair";
-                This.el.style.border="1px dotted #333333";
-
-                console.log("over");
-
-            },false);
-            document.addEventListener("mousedown",function(e){
-
-                startLeft=This.el.offsetLeft,startTop=This.el.offsetTop;
-                orgX= e.clientX-startLeft,orgY= e.clientY-startTop,offsetX=0,offsetY=0;
-
-                var mousemoveProcess=function(e){
-                    e= e||window.event;
-                    var mouseX= e.clientX,mouseY= e.clientY,offsetX=mouseX-orgX,offsetY=mouseY-orgY;
-                    offsetX=Math.min(offsetX,This.el.parentNode.offsetWidth-This.el.offsetWidth-orgLeft);
-                    offsetY=Math.min(offsetY,This.el.parentNode.offsetHeight-This.el.offsetHeight-orgTop);
-                    (offsetX<-orgLeft)&&(offsetX=-orgLeft);
-                    (offsetY<-orgTop)&&(offsetY=-orgTop);
-                    This.el.style.left=offsetX+"px";
-                    This.el.style.top=offsetY+"px";
-                    This.el.style.position="absolute";
-                    e.preventDefault();
-                }
-                document.addEventListener("mousemove",mousemoveProcess,false);
-                document.addEventListener("mouseup",function(e){
-                    document.removeEventListener("mousemove",mousemoveProcess,false);
-                },false);
-            },false);
-
-            document.addEventListener("mouseout",function(){
-//                This.el.style.cursor="default";
-//                This.el.style.border="1px solid #333333";
-            },false);
+            var This=this,orgX=0,orgY=0,p=this.el.parentNode,reg=/^(\d+)px$/;
+            This.orgLeft=reg.exec(window.getComputedStyle?getComputedStyle(This.el,null)["marginLeft"]:This.el.currentStyle["marginLeft"])[1],This.orgTop=reg.exec(window.getComputedStyle?getComputedStyle(This.el,null)["marginTop"]:This.el.currentStyle["marginTop"])[1];
+            var f=function(e){
+                This._mouseOver.call(this,e,This);
+            };
+            var f1=function(e){
+                This._mouseDown.call(this,e,This);
+            };
+            This.addEvent(document,"mouseover",This._mouseOver,This);
+            This.addEvent(document,"mousedown",This._mouseDown,This);
             this.onRender();
             return this;
         }
         DragObject.prototype.onRender=function(){
-          this.el.parentNode!==document.body&&(this.el.parentNode.style.cssText="position:relative;height:600px;border:1px solid blue;");
+          this.el.parentNode!==document.body&&(this.el.parentNode.style.cssText="position:relative;height:400px;border:1px solid blue; margin:10px auto; width:600px;");
+        }
+        DragObject.prototype._mouseMove=function(e,obj){
+            var  This=obj;
+            var mouseX= e.clientX,mouseY= e.clientY,offsetX=mouseX-This.orgX,offsetY=mouseY-This.orgY,
+            offsetX=Math.min(offsetX,This.el.parentNode.offsetWidth-This.el.offsetWidth-This.orgLeft),
+            offsetY=Math.min(offsetY,This.el.parentNode.offsetHeight-This.el.offsetHeight-This.orgTop);
+            (offsetX<-This.orgLeft)&&(offsetX=-This.orgLeft);
+            (offsetY<-This.orgTop)&&(offsetY=-This.orgTop);
+            This.el.style.left=offsetX+"px";
+            This.el.style.top=offsetY+"px";
+            This.el.style.position="absolute";
+        }
+
+        DragObject.prototype._mouseDown=function(e,obj){
+            var This=obj,startLeft=This.el.offsetLeft,startTop=This.el.offsetTop;
+            This.orgX= e.clientX-startLeft,This.orgY= e.clientY-startTop;
+            var move=This.addEvent(document,"mousemove",This._mouseMove,This);
+            This.addEvent(document,"mouseup",This._mouseUp,{obj:This,fn:move});
+        }
+
+        DragObject.prototype._mouseUp=function(e,param){
+            param.obj.removeEvent(document,"mousemove",param.fn);
+        }
+        DragObject.prototype._mouseOver=function(e,obj){
+            var This=obj;
+            This.el.style.cursor="crosshair";
+            This.el.style.border="1px dotted #333333";
         }
     </script>
 </head>
 <body>
-<div>
+<div style="margin:10px auto;">
 
-    <div id="test"></div>
+    <div id="test" ></div>
 </div>
 <script type="text/javascript">
     new DragObject(document.getElementById("test")).render().setLayout(400,140,"newClass");
